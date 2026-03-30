@@ -1,0 +1,412 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:path/path.dart' as path;
+import '../../../core/providers.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../pdf_viewer/ui/pdf_viewer_screen.dart';
+import 'widgets/wacom_connect_button.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  static const String _flutterLogoUrl =
+      'https://imgs.search.brave.com/j48tSDJ37Ar2AQ09BiGnwTdaoIa3psglqzdzvwedJbk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzM1LzIvZmx1dHRl/ci1sb2dvLXBuZ19z/ZWVrbG9nby0zNTQ2/NzEucG5n';
+
+  @override
+  void initState() {
+    super.initState();
+    // Invalidate to force refresh
+    Future.microtask(() {
+      ref.invalidate(recentFilesProvider);
+    });
+  }
+
+  void _openPdf() async {
+    final source = await _showPdfSourcePicker();
+    if (!mounted || source == null) return;
+
+    if (source == _PdfSource.local) {
+      await _openPdfFromLocal();
+      return;
+    }
+
+    await _openPdfFromUrl();
+  }
+
+  Future<void> _openPdfFromLocal() async {
+    final fileService = ref.read(fileServiceProvider);
+    final file = await fileService.pickPdfFile();
+    if (file != null) {
+      _openPdfFile(file);
+    }
+  }
+
+  Future<void> _openPdfFromUrl() async {
+    final controller = TextEditingController();
+    final url = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Open PDF from URL"),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: "PDF URL",
+              hintText: "https://example.com/document.pdf",
+            ),
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (value) {
+              Navigator.pop(dialogContext, value.trim());
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text("Cancel"),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, controller.text.trim());
+              },
+              child: const Text("Open"),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (!mounted || url == null || url.isEmpty) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text("Downloading PDF...")));
+
+    try {
+      final fileService = ref.read(fileServiceProvider);
+      final file = await fileService.downloadPdfFromUrl(url);
+
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      _openPdfFile(file);
+    } catch (error) {
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text("Unable to open URL: $error")),
+      );
+    }
+  }
+
+  Future<_PdfSource?> _showPdfSourcePicker() {
+    return showModalBottomSheet<_PdfSource>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.computer_rounded),
+                title: const Text("Pick from device"),
+                subtitle: const Text("Select a PDF from local storage"),
+                onTap: () => Navigator.pop(context, _PdfSource.local),
+              ),
+              ListTile(
+                leading: const Icon(Icons.link_rounded),
+                title: const Text("Open from URL"),
+                subtitle: const Text("Download and open a PDF from network"),
+                onTap: () => Navigator.pop(context, _PdfSource.network),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openPdfFile(File file) {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PdfViewerScreen(file: file)),
+    );
+  }
+
+  void _openRecentFile(String path) {
+    final file = File(path);
+    if (file.existsSync()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PdfViewerScreen(file: file)),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("File not found")));
+      ref.read(recentFilesServiceProvider).removeRecentFile(path);
+      ref.invalidate(recentFilesProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final recentFilesAsync = ref.watch(recentFilesProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Wacom Signature",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: WacomConnectButton(),
+          ),
+        ],
+      ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left Sidebar/Action Area
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: AppColors.surfaceHover,
+              padding: const EdgeInsets.all(48.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.network(
+                        _flutterLogoUrl,
+                        height: 64,
+                        width: 64,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.image_not_supported);
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    "Digital Document\nSigning System.",
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      letterSpacing: -1,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Securely authorize and sign digital PDFs.",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Hero Action Button
+                  SizedBox(
+                    height: 64,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _openPdf,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_box_rounded, size: 28),
+                          SizedBox(width: 12),
+                          Text(
+                            "Open New Document",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Right Content Area (Recent Files)
+          Expanded(
+            flex: 6,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 48.0,
+                vertical: 32.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Recent Documents",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Expanded(
+                    child: recentFilesAsync.when(
+                      data: (files) {
+                        if (files.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.folder_open,
+                                  size: 64,
+                                  color: AppColors.border,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "No recent documents yet",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: files.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final filePath = files[index];
+                            final fileName = path.basename(filePath);
+                            return Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                hoverColor: AppColors.surfaceHover,
+                                onTap: () => _openRecentFile(filePath),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.picture_as_pdf,
+                                          color: Colors.redAccent,
+                                          size: 32,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              fileName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              filePath,
+                                              style: TextStyle(
+                                                color: AppColors.textSecondary,
+                                                fontSize: 13,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        hoverColor: AppColors.error.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        onPressed: () async {
+                                          await ref
+                                              .read(recentFilesServiceProvider)
+                                              .removeRecentFile(filePath);
+                                          ref.invalidate(recentFilesProvider);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(child: Text("Error: $err")),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _PdfSource { local, network }

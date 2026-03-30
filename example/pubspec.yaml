@@ -1,0 +1,27 @@
+name: flutter_wacom_signature_pad_example
+description: Example app demonstrating the flutter_wacom_signature_pad package.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.5"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_wacom_signature_pad:
+    path: ../
+
+  flutter_riverpod: ^3.2.1
+  google_fonts: ^6.2.1
+  window_manager: ^0.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
