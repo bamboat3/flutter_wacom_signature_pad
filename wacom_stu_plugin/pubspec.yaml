@@ -2,7 +2,7 @@ name: wacom_stu_plugin
 description: >-
   Flutter Windows plugin for Wacom STU signature tablets. Connects,
   disconnects, and streams pen input events via method and event channels.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/bamboat3/flutter_wacom_signature_pad
 repository: https://github.com/bamboat3/flutter_wacom_signature_pad
 

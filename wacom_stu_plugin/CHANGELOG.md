@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+* Publish complete README with full documentation and examples.
+
 ## 1.0.1
 
 * Complete README — badges, channel reference, connect/disconnect/stream/display examples, full signature capture example.
