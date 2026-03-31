@@ -1,5 +1,3 @@
-library flutter_wacom_signature_pad;
-
 // Constants
 export 'src/constants/app_colors.dart';
 

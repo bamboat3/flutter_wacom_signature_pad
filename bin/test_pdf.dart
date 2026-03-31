@@ -29,5 +29,6 @@ void main() async {
 
   // Write the PDF to a file.
   File('test_pdf.pdf').writeAsBytesSync(bytes);
+  // ignore: avoid_print
   print('PDF generated successfully. Check test_pdf.pdf');
 }
