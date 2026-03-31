@@ -1,14 +1,8 @@
 # Changelog
 
-## 1.0.1
-
-* Complete README rewrite — full API reference, FlutterFlow guide, architecture diagram, AppColors table, SSL and branding sections.
-* Fix: correct multipart field names in `WacomPdfSigner` docstring (`filestream`, `outputfilename`).
-* Improved example app — five runnable demos covering every exported widget and provider.
-
 ## 1.0.0
 
-* Initial release.
+* Initial release — first major version.
 * `WacomPdfSigner` widget — downloads PDF from URL, displays interactive PDF viewer with signature placement.
 * Drag-to-draw or tap-to-place signature boxes on any page.
 * Wacom STU tablet integration — captures handwritten signatures via pen input.
@@ -20,4 +14,6 @@
 * `PdfViewerScreen` — standalone PDF viewer screen with signature placement.
 * `SignatureDialog` — signature capture dialog with Wacom pen and touch/mouse fallback.
 * `SavedSignaturesDialog` — browse and reuse previously saved signatures.
+* `WacomConnectButton` — app bar icon button for connection toggling.
+* Full README with API reference, FlutterFlow guide, architecture diagram, and SSL/branding docs.
 * Windows-only platform support (Wacom STU SDK).
