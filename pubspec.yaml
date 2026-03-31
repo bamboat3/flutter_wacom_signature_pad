@@ -3,7 +3,7 @@ description: >-
   A Flutter Windows package for Wacom STU tablet signature capture and PDF
   signing. Supports drag-to-place signature boxes, multipart HTTP upload,
   proper and self-signed SSL, and custom branding on the tablet idle screen.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/bamboat3/flutter_wacom_signature_pad
 repository: https://github.com/bamboat3/flutter_wacom_signature_pad
 issue_tracker: https://github.com/bamboat3/flutter_wacom_signature_pad/issues

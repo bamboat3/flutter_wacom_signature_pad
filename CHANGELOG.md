@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+* Complete README rewrite — full API reference, FlutterFlow guide, architecture diagram, AppColors table, SSL and branding sections.
+* Fix: correct multipart field names in `WacomPdfSigner` docstring (`filestream`, `outputfilename`).
+* Improved example app — five runnable demos covering every exported widget and provider.
+
 ## 1.0.0
 
 * Initial release.
