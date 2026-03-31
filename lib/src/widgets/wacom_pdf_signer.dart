@@ -28,8 +28,9 @@ import 'pdf_viewer_screen.dart' show SignatureBoxModel;
 /// and handles saving to disk.
 ///
 /// Multipart fields sent to your API:
-///   - `file`     — the signed PDF binary
-///   - `fileName` — the value of [outputFileName]
+///   - `token`          — the value of [token]
+///   - `outputfilename` — the value of [outputFileName]
+///   - `filestream`     — the signed PDF binary
 ///
 /// Example:
 /// ```dart

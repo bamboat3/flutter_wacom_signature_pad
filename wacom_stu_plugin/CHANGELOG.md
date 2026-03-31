@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.2
+
+* Fix: shorten package description to comply with pub.dev 180-character limit.
+
 ## 0.0.1
 
 * Initial release.
