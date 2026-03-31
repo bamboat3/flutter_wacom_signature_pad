@@ -2,6 +2,7 @@
 
 ## 1.0.1
 
+* Complete README — badges, channel reference, connect/disconnect/stream/display examples, full signature capture example.
 * Fix: shorten package description to comply with pub.dev 180-character limit.
 
 ## 0.0.1
